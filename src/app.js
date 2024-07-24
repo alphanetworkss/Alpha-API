@@ -4,47 +4,11 @@ const mongoose = require('mongoose');
 const axios = require('axios');
 const crypto = require('crypto');
 const policyModel = require('./policyModel');
-const authMiddleware = require('./authMiddleware');
 
 const PORT = process.env.PORT;
 const app = express();
 app.use(express.json());
 
-// Middleware to parse form data
-app.use(express.urlencoded({ extended: true }));
-
-// Route to serve the form (protected by authMiddleware)
-app.get('/add-policy', authMiddleware, (req, res) => {
-    res.send(`
-        <form action="/add-policy" method="POST">
-            <label for="access_token">Access Token:</label><br>
-            <input type="text" id="access_token" name="access_token"><br>
-            <label for="refresh_token">Refresh Token:</label><br>
-            <input type="text" id="refresh_token" name="refresh_token"><br>
-            <label for="main_url">Main URL:</label><br>
-            <input type="text" id="main_url" name="main_url"><br><br>
-            <input type="submit" value="Submit">
-        </form>
-    `);
-});
-
-// Route to handle form submission (protected by authMiddleware)
-app.post('/add-policy', authMiddleware, async (req, res) => {
-    const { access_token, refresh_token, main_url } = req.body;
-    try {
-        const newPolicy = new policyModel({
-            access_token,
-            refresh_token,
-            main_url
-        });
-        await newPolicy.save();
-        res.send('Policy data added successfully!');
-    } catch (error) {
-        res.status(500).send('Error saving data: ' + error.message);
-    }
-});
-
-// Main route logic
 app.get('/', async (req, res) => {
     const reqUrl = req.query.url;
     const quality = req.query.quality;
@@ -143,7 +107,7 @@ app.get('/', async (req, res) => {
                 const replacement = `${mainUrl}/$1${decryptedResponse}`;
                 const newText = main_data.data.replace(pattern, replacement).replace("enc.key", `enc.key&authorization=${token}`)
 
-                res.set('Content-Type', 'text/plain');
+                 res.set('Content-Type', 'text/plain');
 
                 // res.set({ 'Content-Type': 'application/x-mpegURL', 'Content-Disposition': 'attachment; filename="main.m3u8"' });
                 res.status(200).send(newText);
